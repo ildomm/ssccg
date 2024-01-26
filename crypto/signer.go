@@ -6,3 +6,5 @@ type Signer interface {
 }
 
 // TODO: implement RSA and ECDSA signing ...
+
+// TODO: implement signers builder
