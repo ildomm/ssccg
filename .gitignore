@@ -1,0 +1,9 @@
+# Build directory is a temporary directory used during the build process.
+build/
+
+# Ignore temporary files created by editors etc
+.vscode/
+.DS_STORE
+*.log
+.idea/*
+.run/*
