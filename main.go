@@ -1,20 +1,40 @@
 package main
 
 import (
-	"log"
-
+	"errors"
 	"github.com/ildomm/ssccg/api"
-)
-
-const (
-	ListenAddress = ":8080"
-	// TODO: add further configuration parameters here ...
+	"github.com/ildomm/ssccg/system"
+	"log"
+	"net/http"
 )
 
 func main() {
-	server := api.NewServer(ListenAddress)
+	// Initialize log standards
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	log.SetPrefix("[SSCCG] ")
+
+	// TODO: Initialize database
+	// TODO: Initialize services
+
+	// Initialize the server
+	server := api.NewServer()
+	if listenAddress := system.ExtractServerPort(); listenAddress != nil {
+		server.WithListenAddress(*listenAddress)
+	}
+	log.Println("Starting server on ", server.ListenAddress())
 
 	if err := server.Run(); err != nil {
-		log.Fatal("Could not start server on ", ListenAddress)
+		if !errors.Is(err, http.ErrServerClosed) {
+			log.Fatal("Could not start server on ", server.ListenAddress())
+		} else {
+			log.Println("Server closed")
+		}
 	}
+}
+
+// TODO: Initialize signers list
+//
+//nolint:all
+func cryptoSigners() {
+
 }

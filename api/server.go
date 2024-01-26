@@ -1,80 +1,91 @@
 package api
 
 import (
-	"encoding/json"
+	"fmt"
+	"github.com/gorilla/mux"
 	"net/http"
+	"time"
 )
 
-// Response is the generic API response container.
-type Response struct {
-	Data interface{} `json:"data"`
-}
-
-// ErrorResponse is the generic error API response container.
-type ErrorResponse struct {
-	Errors []string `json:"errors"`
-}
+const (
+	DefaultListenAddress     = 8080
+	DefaultReadHeaderTimeout = time.Second * 15
+	DefaultWriteTimeout      = time.Second * 15
+	DefaultReadTimeout       = time.Second * 15
+	DefaultIdleTimeout       = time.Second * 60
+)
 
 // Server manages HTTP requests and dispatches them to the appropriate services.
 type Server struct {
-	listenAddress string
+	listenAddress     int
+	readHeaderTimeout time.Duration
+	writeTimeout      time.Duration
+	readTimeout       time.Duration
+	idleTimeout       time.Duration
 }
 
 // NewServer is a factory to instantiate a new Server.
-func NewServer(listenAddress string) *Server {
+func NewServer() *Server {
+
 	return &Server{
-		listenAddress: listenAddress,
-		// TODO: add services / further dependencies here ...
+		listenAddress:     DefaultListenAddress,
+		readHeaderTimeout: DefaultReadHeaderTimeout,
+		writeTimeout:      DefaultWriteTimeout,
+		readTimeout:       DefaultReadTimeout,
+		idleTimeout:       DefaultIdleTimeout,
 	}
 }
 
-// Run registers all HandlerFuncs for the existing HTTP routes and starts the Server.
+// Run defines the server and starts it.
 func (s *Server) Run() error {
-	mux := http.NewServeMux()
 
-	mux.Handle("/api/v0/health", http.HandlerFunc(s.Health))
+	httpServer := &http.Server{
+		Addr: fmt.Sprintf(":%d", s.listenAddress),
 
-	// TODO: register further HandlerFuncs here ...
+		// Good practice to set timeouts to avoid Slow-loris attacks.
+		ReadHeaderTimeout: s.readHeaderTimeout,
+		WriteTimeout:      s.writeTimeout,
+		ReadTimeout:       s.readTimeout,
+		IdleTimeout:       s.idleTimeout,
 
-	return http.ListenAndServe(s.listenAddress, mux)
+		Handler: s.router(),
+	}
+
+	return httpServer.ListenAndServe()
 }
 
-// WriteInternalError writes a default internal error message as an HTTP response.
-func WriteInternalError(w http.ResponseWriter) {
-	w.WriteHeader(http.StatusInternalServerError)
-	w.Write([]byte(http.StatusText(http.StatusInternalServerError))) //nolint:all
+// router registers all HandlerFunc and middleware for the existing HTTP routes.
+func (s *Server) router() *mux.Router {
+
+	rootRouter := mux.NewRouter()
+	rootRouter.HandleFunc("/api/v0/health", s.HealthHandler)
+
+	rootRouter.Use(NewRecoverMiddleware())
+	rootRouter.Use(NewLoggingMiddleware())
+
+	return rootRouter
 }
 
-// WriteErrorResponse takes an HTTP status code and a slice of errors
-// and writes those as an HTTP error response in a structured format.
-func WriteErrorResponse(w http.ResponseWriter, code int, errors []string) {
-	w.WriteHeader(code)
-
-	errorResponse := ErrorResponse{
-		Errors: errors,
-	}
-
-	bytes, err := json.Marshal(errorResponse)
-	if err != nil {
-		WriteInternalError(w)
-	}
-
-	w.Write(bytes) //nolint:all
+func (s *Server) ListenAddress() int {
+	return s.listenAddress
 }
 
-// WriteAPIResponse takes an HTTP status code and a generic data struct
-// and writes those as an HTTP response in a structured format.
-func WriteAPIResponse(w http.ResponseWriter, code int, data interface{}) {
-	w.WriteHeader(code)
+func (s *Server) WithListenAddress(listenAddress int) {
+	s.listenAddress = listenAddress
+}
 
-	response := Response{
-		Data: data,
-	}
+func (s *Server) WithReadHeaderTimeout(readHeaderTimeout time.Duration) {
+	s.readHeaderTimeout = readHeaderTimeout
+}
 
-	bytes, err := json.MarshalIndent(response, "", "  ")
-	if err != nil {
-		WriteInternalError(w)
-	}
+func (s *Server) WithWriteTimeout(writeTimeout time.Duration) {
+	s.writeTimeout = writeTimeout
+}
 
-	w.Write(bytes) //nolint:all
+func (s *Server) WithReadTimeout(readTimeout time.Duration) {
+	s.readTimeout = readTimeout
+}
+
+func (s *Server) WithIdleTimeout(idleTimeout time.Duration) {
+	s.idleTimeout = idleTimeout
 }

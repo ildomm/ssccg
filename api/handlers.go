@@ -7,8 +7,8 @@ type HealthResponse struct {
 	Version string `json:"version"`
 }
 
-// Health evaluates the health of the service and writes a standardized response.
-func (s *Server) Health(response http.ResponseWriter, request *http.Request) {
+// HealthHandler evaluates the health of the service and writes a standardized response.
+func (s *Server) HealthHandler(response http.ResponseWriter, request *http.Request) {
 	if request.Method != http.MethodGet {
 		WriteErrorResponse(response, http.StatusMethodNotAllowed, []string{
 			http.StatusText(http.StatusMethodNotAllowed),
