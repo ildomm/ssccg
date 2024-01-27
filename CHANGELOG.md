@@ -1,5 +1,9 @@
 # Change Log
 
+## v0.0.7
+
+- Implement concrete querier in-memory
+
 ## v0.0.6
 
 - Define classes signatures

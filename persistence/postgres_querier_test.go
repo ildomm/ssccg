@@ -43,9 +43,9 @@ func TestPostgresUpdateDevice(t *testing.T) {
 func TestPostgresSaveSignature(t *testing.T) {
 	ctx := context.TODO()
 	querier, _ := NewPostgresQuerier(ctx, "test")
-	signature := domain.Signature{ /* Initialize fields */ }
+	signature := domain.SignedTransaction{ /* Initialize fields */ }
 
-	assert.Panics(t, func() { querier.SaveSignature(signature) }) //nolint:all
+	assert.Panics(t, func() { querier.SaveSignedTransaction(signature) }) //nolint:all
 }
 
 func TestPostgresGetSignaturesByDeviceId(t *testing.T) {
@@ -53,5 +53,5 @@ func TestPostgresGetSignaturesByDeviceId(t *testing.T) {
 	querier, _ := NewPostgresQuerier(ctx, "test")
 	id := uuid.New()
 
-	assert.Panics(t, func() { querier.GetSignaturesByDevice(id) }) //nolint:all
+	assert.Panics(t, func() { querier.GetSignedTransactions(id) }) //nolint:all
 }

@@ -1,8 +1,12 @@
 package domain
 
-// TODO: signature device domain model ...
+import "github.com/google/uuid"
 
 type Device struct {
-	// TODO: device domain model ...
-	SignatureCounter int
+	ID            uuid.UUID `db:"id"`
+	Label         string    `db:"label"`
+	SignCounter   int       `db:"sign_counter"`
+	SignAlgorithm string    `db:"sign_algorithm"`
+	PublicKey     string    `db:"public_key"`
+	PrivateKey    string    `db:"private_Key"`
 }

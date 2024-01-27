@@ -16,42 +16,137 @@ func TestNewInMemoryQuerier(t *testing.T) {
 	assert.NotNil(t, querier)
 }
 
-func TestInMemorySaveDevice(t *testing.T) {
+func TestInMemorySaveAndGetDevice(t *testing.T) {
 	ctx := context.TODO()
 	querier, _ := NewInMemoryQuerier(ctx)
-	device := domain.Device{ /* Initialize fields */ }
+	device := domain.Device{
+		ID:            uuid.New(),
+		Label:         "Test Device",
+		SignCounter:   0,
+		SignAlgorithm: "RSA",
+		PublicKey:     "public key",
+		PrivateKey:    "private key",
+	}
 
-	assert.Panics(t, func() { querier.SaveDevice(device) }) //nolint:all
+	err := querier.SaveDevice(device)
+	assert.NoError(t, err)
+
+	retrievedDevice, err := querier.GetDevice(device.ID)
+	assert.NoError(t, err)
+	assert.NotNil(t, retrievedDevice)
+	assert.Equal(t, device.ID, retrievedDevice.ID)
 }
 
-func TestInMemoryGetDeviceById(t *testing.T) {
+func TestInMemoryGetDeviceNotFound(t *testing.T) {
 	ctx := context.TODO()
 	querier, _ := NewInMemoryQuerier(ctx)
 	id := uuid.New()
 
-	assert.Panics(t, func() { querier.GetDevice(id) }) //nolint:all
+	device, err := querier.GetDevice(id)
+	assert.Error(t, err)
+	assert.Nil(t, device)
+	assert.Equal(t, ErrDeviceNotFound, err)
 }
 
 func TestInMemoryUpdateDevice(t *testing.T) {
 	ctx := context.TODO()
 	querier, _ := NewInMemoryQuerier(ctx)
-	device := domain.Device{ /* Initialize fields */ }
+	device := domain.Device{
+		ID:            uuid.New(),
+		Label:         "Test Device",
+		SignCounter:   0,
+		SignAlgorithm: "RSA",
+		PublicKey:     "public key",
+		PrivateKey:    "private key",
+	}
 
-	assert.Panics(t, func() { querier.UpdateDevice(device) }) //nolint:all
+	// Save first, then update
+	_ = querier.SaveDevice(device)
+	device.SignCounter++
+	err := querier.UpdateDevice(device)
+	assert.NoError(t, err)
+
+	// Verify the update
+	updatedDevice, _ := querier.GetDevice(device.ID)
+	assert.Equal(t, 1, updatedDevice.SignCounter)
 }
 
-func TestInMemorySaveSignature(t *testing.T) {
+func TestInMemoryUpdateDeviceNotFound(t *testing.T) {
 	ctx := context.TODO()
 	querier, _ := NewInMemoryQuerier(ctx)
-	signature := domain.Signature{ /* Initialize fields */ }
+	device := domain.Device{
+		ID:            uuid.New(),
+		Label:         "Test Device",
+		SignCounter:   0,
+		SignAlgorithm: "RSA",
+		PublicKey:     "public key",
+		PrivateKey:    "private key",
+	}
 
-	assert.Panics(t, func() { querier.SaveSignature(signature) }) //nolint:all
+	err := querier.UpdateDevice(device)
+	assert.Equal(t, ErrDeviceNotFound, err)
 }
 
-func TestInMemoryGetSignaturesByDeviceId(t *testing.T) {
+func TestInMemorySaveSignedTransactionWithDevice(t *testing.T) {
+	ctx := context.TODO()
+	querier, _ := NewInMemoryQuerier(ctx)
+
+	// First, create and save a device
+	deviceID := uuid.New()
+	device := domain.Device{
+		ID:            deviceID,
+		Label:         "Test Device",
+		SignCounter:   0,
+		SignAlgorithm: "RSA",
+		PublicKey:     "public key",
+		PrivateKey:    "private key",
+	}
+	err := querier.SaveDevice(device)
+	assert.NoError(t, err)
+
+	// Then, create and save a signed transaction
+	transaction := domain.SignedTransaction{
+		ID:          uuid.New(),
+		DeviceID:    deviceID, // Use the same device ID
+		RawData:     []byte{0x01, 0x02, 0x03},
+		Sign:        "sign",
+		SignCounter: 0,
+	}
+
+	id, err := querier.SaveSignedTransaction(transaction)
+	assert.NoError(t, err)
+	assert.NotEqual(t, uuid.UUID{}, id)
+
+	// Retrieving and checking the saved transaction
+	signatures, err := querier.GetSignedTransactions(deviceID)
+	assert.NoError(t, err)
+	assert.Len(t, signatures, 1)
+	assert.Equal(t, id, signatures[0].ID)
+}
+
+func TestInMemorySaveSignedTransactionWithoutDevice(t *testing.T) {
+	ctx := context.TODO()
+	querier, _ := NewInMemoryQuerier(ctx)
+
+	// Create a transaction without saving the device first
+	transaction := domain.SignedTransaction{
+		ID:          uuid.New(),
+		DeviceID:    uuid.New(), // Random device ID
+		RawData:     []byte{0x01, 0x02, 0x03},
+		Sign:        "sign",
+		SignCounter: 0,
+	}
+
+	_, err := querier.SaveSignedTransaction(transaction)
+	assert.Equal(t, ErrDeviceNotFound, err)
+}
+
+func TestInMemoryGetSignedTransactionsEmpty(t *testing.T) {
 	ctx := context.TODO()
 	querier, _ := NewInMemoryQuerier(ctx)
 	id := uuid.New()
 
-	assert.Panics(t, func() { querier.GetSignaturesByDevice(id) }) //nolint:all
+	signatures, err := querier.GetSignedTransactions(id)
+	assert.NoError(t, err)
+	assert.Empty(t, signatures)
 }

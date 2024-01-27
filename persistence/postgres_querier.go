@@ -37,6 +37,9 @@ func (q *PostgresQuerier) Close() {
 }
 
 func (q *PostgresQuerier) SaveDevice(device domain.Device) error {
+	//q.lock.Lock()
+	//defer q.lock.Unlock()
+
 	panic("implement me")
 }
 
@@ -52,10 +55,10 @@ func (q *PostgresQuerier) UpdateDevice(device domain.Device) error {
 	panic("implement me")
 }
 
-func (q *PostgresQuerier) SaveSignature(device domain.Signature) (uuid.UUID, error) {
+func (q *PostgresQuerier) SaveSignedTransaction(transaction domain.SignedTransaction) (uuid.UUID, error) {
 	panic("implement me")
 }
 
-func (q *PostgresQuerier) GetSignaturesByDevice(id uuid.UUID) ([]domain.Signature, error) {
+func (q *PostgresQuerier) GetSignedTransactions(deviceId uuid.UUID) ([]domain.SignedTransaction, error) {
 	panic("implement me")
 }
