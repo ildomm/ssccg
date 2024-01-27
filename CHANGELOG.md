@@ -1,5 +1,9 @@
 # Change Log
 
+## v0.0.5
+
+- Fix bug in crypto package and improve tests
+
 ## v0.0.4
 
 - Refactor http server and base handlers
