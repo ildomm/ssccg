@@ -59,6 +59,10 @@ func (q *PostgresQuerier) SaveSignedTransaction(transaction domain.SignedTransac
 	panic("implement me")
 }
 
+func (q *PostgresQuerier) GetSignedTransaction(deviceId uuid.UUID, signCounter int) (domain.SignedTransaction, error) {
+	panic("implement me")
+}
+
 func (q *PostgresQuerier) GetSignedTransactions(deviceId uuid.UUID) ([]domain.SignedTransaction, error) {
 	panic("implement me")
 }

@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.0.9
+
+- Implement devices manager
+  - All operations
+
 ## v0.0.8
 
 - Implement crypto keys and signatures generators

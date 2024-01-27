@@ -13,5 +13,6 @@ type Querier interface {
 	GetDevice(id uuid.UUID) (*domain.Device, error)
 	UpdateDevice(device domain.Device) error
 	SaveSignedTransaction(transaction domain.SignedTransaction) (uuid.UUID, error)
+	GetSignedTransaction(deviceId uuid.UUID, signCounter int) (*domain.SignedTransaction, error)
 	GetSignedTransactions(deviceId uuid.UUID) ([]domain.SignedTransaction, error)
 }

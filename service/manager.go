@@ -7,7 +7,7 @@ import (
 )
 
 type Manager interface {
-	CreateDevice(ctx context.Context, id uuid.UUID, algorithm string) (*domain.Device, error)
+	CreateDevice(ctx context.Context, id uuid.UUID, label, algorithm string) (*domain.Device, error)
 	GetDevices(ctx context.Context) ([]domain.Device, error)
 	GetDevice(ctx context.Context, id uuid.UUID) (*domain.Device, error)
 	CreateSignedTransaction(ctx context.Context, deviceId uuid.UUID, data []byte) (*domain.SignedTransaction, error)

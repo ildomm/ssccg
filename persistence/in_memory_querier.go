@@ -88,6 +88,18 @@ func (q *InMemoryQuerier) SaveSignedTransaction(transaction domain.SignedTransac
 	return transaction.ID, nil
 }
 
+func (q *InMemoryQuerier) GetSignedTransaction(deviceId uuid.UUID, signCounter int) (*domain.SignedTransaction, error) {
+	q.lock.Lock()
+	defer q.lock.Unlock()
+
+	for _, transaction := range q.signedTransacts[deviceId] {
+		if transaction.SignCounter == signCounter {
+			return &transaction, nil
+		}
+	}
+	return nil, nil
+}
+
 func (q *InMemoryQuerier) GetSignedTransactions(deviceId uuid.UUID) ([]domain.SignedTransaction, error) {
 	q.lock.Lock()
 	defer q.lock.Unlock()

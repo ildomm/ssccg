@@ -66,16 +66,28 @@ func NewKeysGenerator() *KeysGenerator {
 	return &kg
 }
 
-func (kg *KeysGenerator) GenerateKeys(algorithm string) ([]byte, []byte, error) {
+func (kg *KeysGenerator) IsValidAlgorithm(algorithm string) bool {
+	switch algorithm {
+	case "RSA":
+		return true
+	case "ECDSA":
+		return true
+	default:
+		return false
+	}
+}
 
+func (kg *KeysGenerator) GenerateKeys(algorithm string) ([]byte, []byte, error) {
+	if !kg.IsValidAlgorithm(algorithm) {
+		return nil, nil, ErrCryptoEngineNotFound
+	}
 	switch algorithm {
 	case "RSA":
 		return kg.generateRSAKeys()
 	case "ECDSA":
 		return kg.generateECDSAKeys()
-	default:
-		return nil, nil, ErrCryptoEngineNotFound
 	}
+	return nil, nil, nil
 }
 
 func (kg *KeysGenerator) generateRSAKeys() ([]byte, []byte, error) {
