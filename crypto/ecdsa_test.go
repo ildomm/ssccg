@@ -21,13 +21,13 @@ func TestECCMarshaler(t *testing.T) {
 	marshaler := NewECCMarshaler()
 
 	// Test Encode
-	encodedPublic, encodedPrivate, err := marshaler.Encode(keyPair)
+	encodedPublic, encodedPrivate, err := marshaler.Marshal(keyPair)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, encodedPublic, "Encoded public key should not be empty")
 	assert.NotEmpty(t, encodedPrivate, "Encoded private key should not be empty")
 
 	// Test Decode
-	decodedKeyPair, err := marshaler.Decode(encodedPrivate)
+	decodedKeyPair, err := marshaler.Unmarshal(encodedPrivate)
 	assert.NoError(t, err)
 	assert.NotNil(t, decodedKeyPair)
 

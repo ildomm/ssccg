@@ -3,17 +3,22 @@ package service
 import (
 	"context"
 	"github.com/google/uuid"
+	"github.com/ildomm/ssccg/crypto"
 	"github.com/ildomm/ssccg/domain"
 	"github.com/ildomm/ssccg/persistence"
 )
 
 type StandardManager struct {
-	querier *persistence.Querier
+	querier       *persistence.Querier
+	keysGenerator *crypto.KeysGenerator
+	SignGenerator *crypto.SignGenerator
 }
 
 func NewDeviceManager(querier *persistence.Querier) *StandardManager {
 	dm := StandardManager{
-		querier: querier,
+		querier:       querier,
+		keysGenerator: crypto.NewKeysGenerator(),
+		SignGenerator: crypto.NewSignGenerator(),
 	}
 	return &dm
 }

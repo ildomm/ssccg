@@ -30,3 +30,26 @@ func TestECCGenerator(t *testing.T) {
 	assert.NotNil(t, keyPair.Private, "ECC private key should not be nil")
 	assert.NotNil(t, keyPair.Public, "ECC public key should not be nil")
 }
+
+func TestGenerateKeysRSA(t *testing.T) {
+	kg := NewKeysGenerator()
+	privateKeyBytes, publicKeyBytes, err := kg.GenerateKeys("RSA")
+	assert.NoError(t, err)
+	assert.NotNil(t, privateKeyBytes)
+	assert.NotNil(t, publicKeyBytes)
+}
+
+func TestGenerateKeysECC(t *testing.T) {
+	kg := NewKeysGenerator()
+	privateKeyBytes, publicKeyBytes, err := kg.GenerateKeys("ECDSA")
+	assert.NoError(t, err)
+	assert.NotNil(t, privateKeyBytes)
+	assert.NotNil(t, publicKeyBytes)
+}
+
+func TestGenerateKeysInvalid(t *testing.T) {
+	kg := NewKeysGenerator()
+	_, _, err := kg.GenerateKeys("Invalid")
+	assert.Error(t, err)
+	assert.Equal(t, ErrCryptoEngineNotFound, err)
+}

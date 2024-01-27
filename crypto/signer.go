@@ -1,19 +1,5 @@
 package crypto
 
-// Signer defines a contract for different types of signing implementations.
-type Signer interface {
-	Sign(dataToBeSigned []byte) ([]byte, error)
-}
-
-// TODO: implement RSA and ECDSA signing ...
-
-// TODO: implement signers builder
-
-// OPTION A
-
-/*
-package crypto
-
 import (
 	"crypto"
 	"crypto/ecdsa"
@@ -21,100 +7,107 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"errors"
+	"fmt"
 )
+
+/* Not needed
 
 // Signer defines a contract for different types of signing implementations.
 type Signer interface {
 	Sign(dataToBeSigned []byte) ([]byte, error)
 }
 
+*/
+
+type SignGenerator struct {
+	rsaSigner   RSASigner
+	ecdsaSigner ECCSigner
+}
+
+func NewSignGenerator() *SignGenerator {
+	kg := SignGenerator{
+		rsaSigner:   NewRSASigner(),
+		ecdsaSigner: NewECCSigner(),
+	}
+	return &kg
+}
+
+func (sg *SignGenerator) Sign(algorithm string, privateKeyBytes, dataToBeSigned []byte) ([]byte, error) {
+
+	switch algorithm {
+	case "RSA":
+		return sg.rsaSigner.Sign(privateKeyBytes, dataToBeSigned)
+	case "ECDSA":
+		return sg.ecdsaSigner.Sign(privateKeyBytes, dataToBeSigned)
+	default:
+		return nil, ErrCryptoEngineNotFound
+	}
+}
+
 type RSASigner struct {
-	encodedPrivateKey []byte
-	marshaller        *RSAMarshaler
+	marshaller RSAMarshaler
 }
 
-func NewRSASigner() (Signer, error) {
-	g := RSAGenerator{}
-	keyPair, err := g.Generate()
-	if err != nil {
-		return nil, err
+func NewRSASigner() RSASigner {
+	return RSASigner{
+		marshaller: NewRSAMarshaler(),
 	}
-
-	marshaller := &RSAMarshaler{}
-	_, encodedPrivate, err := marshaller.Marshal(*keyPair)
-	if err != nil {
-		return nil, err
-	}
-
-	return &RSASigner{
-		encodedPrivateKey: encodedPrivate,
-		marshaller:        marshaller,
-	}, nil
 }
 
-func (signer *RSASigner) Sign(dataToBeSigned []byte) ([]byte, error) {
-	keyPair, err := signer.marshaller.Unmarshal(signer.encodedPrivateKey)
+func (sg RSASigner) Sign(privateKeyBytes, dataToBeSigned []byte) ([]byte, error) {
+	hash, err := getHashSum(dataToBeSigned)
 	if err != nil {
 		return nil, err
 	}
-
-	hashed := sha256.Sum256(dataToBeSigned)
-	sig, err := rsa.SignPKCS1v15(nil, keyPair.Private, crypto.SHA256, hashed[:])
+	keyPair, err := sg.marshaller.Unmarshal(privateKeyBytes)
 	if err != nil {
 		return nil, err
 	}
-
-	// TODO: Extract into a Verifier interface
-	if err = rsa.VerifyPKCS1v15(keyPair.Public, crypto.SHA256, hashed[:], sig); err != nil {
+	signature, err := rsa.SignPKCS1v15(rand.Reader, keyPair.Private, crypto.SHA256, hash[:])
+	if err != nil {
 		return nil, err
 	}
-
-	return sig, nil
+	err = rsa.VerifyPKCS1v15(keyPair.Public, crypto.SHA256, hash, signature)
+	if err != nil {
+		return nil, err
+	}
+	return signature, nil
 }
 
 type ECCSigner struct {
-	encodedPrivateKey []byte
-	marshaller        *ECCMarshaler
+	marshaller ECCMarshaler
 }
 
-func NewECCSigner() (Signer, error) {
-	g := ECCGenerator{}
-	keyPair, err := g.Generate()
-	if err != nil {
-		return nil, err
+func NewECCSigner() ECCSigner {
+	return ECCSigner{
+		marshaller: NewECCMarshaler(),
 	}
-
-	marshaller := &ECCMarshaler{}
-	_, encodedPrivate, err := marshaller.Encode(*keyPair)
-	if err != nil {
-		return nil, err
-	}
-
-	return &ECCSigner{
-		encodedPrivateKey: encodedPrivate,
-		marshaller:        marshaller,
-	}, nil
 }
 
-func (signer *ECCSigner) Sign(dataToBeSigned []byte) ([]byte, error) {
-	keyPair, err := signer.marshaller.Decode(signer.encodedPrivateKey)
+func (sg ECCSigner) Sign(privateKeyBytes, dataToBeSigned []byte) ([]byte, error) {
+	hash, err := getHashSum(dataToBeSigned)
 	if err != nil {
 		return nil, err
 	}
-
-	hashed := sha256.Sum256(dataToBeSigned)
-	sig, err := ecdsa.SignASN1(rand.Reader, keyPair.Private, hashed[:])
+	keyPair, err := sg.marshaller.Unmarshal(privateKeyBytes)
 	if err != nil {
 		return nil, err
 	}
-
-	// TODO: Extract into a Verifier interface
-	if valid := ecdsa.VerifyASN1(keyPair.Public, hashed[:], sig); !valid {
-		return nil, errors.New("invalid ECC signature")
+	signature, err := ecdsa.SignASN1(rand.Reader, keyPair.Private, hash[:])
+	if err != nil {
+		return nil, err
 	}
-
-	return sig, nil
+	if !ecdsa.VerifyASN1(keyPair.Public, hash, signature) {
+		return nil, errors.New("failed to verify ASN1 signature")
+	}
+	return signature, nil
 }
 
-
-*/
+func getHashSum(dataToBeSigned []byte) ([]byte, error) {
+	msgHash := sha256.New()
+	_, err := msgHash.Write(dataToBeSigned)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get hash sum: %w", err)
+	}
+	return msgHash.Sum(nil), nil
+}

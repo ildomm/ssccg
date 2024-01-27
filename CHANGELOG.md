@@ -1,5 +1,9 @@
 # Change Log
 
+## v0.0.8
+
+- Implement crypto keys and signatures generators
+
 ## v0.0.7
 
 - Implement concrete querier in-memory
