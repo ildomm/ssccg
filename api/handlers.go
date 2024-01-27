@@ -1,6 +1,9 @@
 package api
 
-import "net/http"
+import (
+	"github.com/ildomm/ssccg/service"
+	"net/http"
+)
 
 type HealthResponse struct {
 	Status  string `json:"status"`
@@ -22,4 +25,38 @@ func (s *Server) HealthHandler(response http.ResponseWriter, request *http.Reque
 	}
 
 	WriteAPIResponse(response, http.StatusOK, health)
+}
+
+type deviceHandler struct {
+	deviceManager *service.Manager
+}
+
+func NewDeviceHandler(deviceManager *service.Manager) *deviceHandler {
+	return &deviceHandler{
+		deviceManager: deviceManager,
+	}
+}
+
+func (h *deviceHandler) ListDeviceFunc(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *deviceHandler) GetDeviceFunc(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+
+// CreateDeviceFunc creates a new device.
+func (h *deviceHandler) CreateDeviceFunc(w http.ResponseWriter, r *http.Request) {
+	// Extract params
+	//id := mux.Vars(r)["id"]
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *deviceHandler) ListSignatureFunc(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *deviceHandler) CreateSignatureFunc(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
 }

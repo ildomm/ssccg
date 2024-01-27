@@ -57,13 +57,21 @@ func (s *Server) Run() error {
 // router registers all HandlerFunc and middleware for the existing HTTP routes.
 func (s *Server) router() *mux.Router {
 
-	rootRouter := mux.NewRouter()
-	rootRouter.HandleFunc("/api/v0/health", s.HealthHandler)
+	r := mux.NewRouter()
 
-	rootRouter.Use(NewRecoverMiddleware())
-	rootRouter.Use(NewLoggingMiddleware())
+	r.Use(NewRecoverMiddleware())
+	r.Use(NewLoggingMiddleware())
 
-	return rootRouter
+	r.HandleFunc("/api/v0/health", s.HealthHandler)
+
+	dh := NewDeviceHandler(nil)
+	r.HandleFunc("/api/v1/devices", dh.ListDeviceFunc).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/devices/{id}", dh.GetDeviceFunc).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/devices/{id}", dh.CreateDeviceFunc).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/devices/{id}/signatures", dh.ListSignatureFunc).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/devices/{id}/signatures", dh.CreateSignatureFunc).Methods(http.MethodPost)
+
+	return r
 }
 
 func (s *Server) ListenAddress() int {

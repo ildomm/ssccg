@@ -29,7 +29,7 @@ func TestInMemoryGetDeviceById(t *testing.T) {
 	querier, _ := NewInMemoryQuerier(ctx)
 	id := uuid.New()
 
-	assert.Panics(t, func() { querier.GetDeviceById(id) }) //nolint:all
+	assert.Panics(t, func() { querier.GetDevice(id) }) //nolint:all
 }
 
 func TestInMemoryUpdateDevice(t *testing.T) {
@@ -53,5 +53,5 @@ func TestInMemoryGetSignaturesByDeviceId(t *testing.T) {
 	querier, _ := NewInMemoryQuerier(ctx)
 	id := uuid.New()
 
-	assert.Panics(t, func() { querier.GetSignaturesByDeviceId(id) }) //nolint:all
+	assert.Panics(t, func() { querier.GetSignaturesByDevice(id) }) //nolint:all
 }

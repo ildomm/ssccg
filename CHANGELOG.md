@@ -1,5 +1,12 @@
 # Change Log
 
+## v0.0.6
+
+- Define classes signatures
+  - Device handler methods
+  - Device manager methods
+  - RESTful API paths
+
 ## v0.0.5
 
 - Fix bug in crypto package and improve tests

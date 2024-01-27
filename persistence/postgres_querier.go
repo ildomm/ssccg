@@ -40,7 +40,11 @@ func (q *PostgresQuerier) SaveDevice(device domain.Device) error {
 	panic("implement me")
 }
 
-func (q *PostgresQuerier) GetDeviceById(id uuid.UUID) (*domain.Device, error) {
+func (q *PostgresQuerier) GetDevices() ([]domain.Device, error) {
+	panic("implement me")
+}
+
+func (q *PostgresQuerier) GetDevice(id uuid.UUID) (*domain.Device, error) {
 	panic("implement me")
 }
 
@@ -52,6 +56,6 @@ func (q *PostgresQuerier) SaveSignature(device domain.Signature) (uuid.UUID, err
 	panic("implement me")
 }
 
-func (q *PostgresQuerier) GetSignaturesByDeviceId(id uuid.UUID) ([]domain.Signature, error) {
+func (q *PostgresQuerier) GetSignaturesByDevice(id uuid.UUID) ([]domain.Signature, error) {
 	panic("implement me")
 }

@@ -33,7 +33,11 @@ func (q *InMemoryQuerier) SaveDevice(device domain.Device) error {
 	panic("implement me")
 }
 
-func (q *InMemoryQuerier) GetDeviceById(id uuid.UUID) (*domain.Device, error) {
+func (q *InMemoryQuerier) GetDevices() ([]domain.Device, error) {
+	panic("implement me")
+}
+
+func (q *InMemoryQuerier) GetDevice(id uuid.UUID) (*domain.Device, error) {
 	panic("implement me")
 }
 
@@ -45,6 +49,6 @@ func (q *InMemoryQuerier) SaveSignature(device domain.Signature) (uuid.UUID, err
 	panic("implement me")
 }
 
-func (q *InMemoryQuerier) GetSignaturesByDeviceId(id uuid.UUID) ([]domain.Signature, error) {
+func (q *InMemoryQuerier) GetSignaturesByDevice(id uuid.UUID) ([]domain.Signature, error) {
 	panic("implement me")
 }

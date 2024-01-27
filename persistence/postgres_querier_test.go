@@ -29,7 +29,7 @@ func TestIPostgresGetDeviceById(t *testing.T) {
 	querier, _ := NewPostgresQuerier(ctx, "test")
 	id := uuid.New()
 
-	assert.Panics(t, func() { querier.GetDeviceById(id) }) //nolint:all
+	assert.Panics(t, func() { querier.GetDevice(id) }) //nolint:all
 }
 
 func TestPostgresUpdateDevice(t *testing.T) {
@@ -53,5 +53,5 @@ func TestPostgresGetSignaturesByDeviceId(t *testing.T) {
 	querier, _ := NewPostgresQuerier(ctx, "test")
 	id := uuid.New()
 
-	assert.Panics(t, func() { querier.GetSignaturesByDeviceId(id) }) //nolint:all
+	assert.Panics(t, func() { querier.GetSignaturesByDevice(id) }) //nolint:all
 }
