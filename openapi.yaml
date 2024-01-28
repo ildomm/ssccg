@@ -1,7 +1,11 @@
 openapi: 3.0.0
 info:
   title: Devices API
-  version: 1.0.0
+  version: 0.1.0
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
 
 paths:
   /api/v1/health:
@@ -163,7 +167,7 @@ components:
       properties:
         algorithm:
           type: string
-          enum: [ECC, RSA]
+          enum: [ECDSA, RSA]
         label:
           type: string
 

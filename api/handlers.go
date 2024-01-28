@@ -1,7 +1,12 @@
 package api
 
 import (
-	"github.com/ildomm/ssccg/service"
+	"encoding/json"
+	"errors"
+	"github.com/google/uuid"
+	"github.com/gorilla/mux"
+	"github.com/ildomm/ssccg/dao"
+	"github.com/ildomm/ssccg/domain"
 	"net/http"
 )
 
@@ -22,37 +27,143 @@ func (s *Server) HealthHandler(response http.ResponseWriter, request *http.Reque
 	WriteAPIResponse(response, http.StatusOK, health)
 }
 
+// deviceHandler handles all requests related to devices.
 type deviceHandler struct {
-	deviceManager *service.Manager
+	deviceDAO dao.DeviceDAO
 }
 
-func NewDeviceHandler(deviceManager *service.Manager) *deviceHandler {
+func NewDeviceHandler(deviceDAO dao.DeviceDAO) *deviceHandler {
 	return &deviceHandler{
-		deviceManager: deviceManager,
+		deviceDAO: deviceDAO,
 	}
 }
 
+// Transform domain.Device to api.DeviceResponse
+func transformToDeviceResponse(device domain.Device) DeviceResponse {
+	return DeviceResponse{
+		ID:            device.ID,
+		Label:         device.Label,
+		SignAlgorithm: device.SignAlgorithm,
+		PublicKey:     device.PublicKey,
+	}
+}
+
+// ListDeviceFunc handles the request to list all devices.
 func (h *deviceHandler) ListDeviceFunc(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
+	devices, err := h.deviceDAO.GetDevices()
+	if err != nil {
+		WriteErrorResponse(w, http.StatusInternalServerError, []string{err.Error()})
+		return
+	}
+
+	deviceResponses := make([]DeviceResponse, 0, len(devices))
+	for _, device := range devices {
+		deviceResponses = append(deviceResponses, transformToDeviceResponse(device))
+	}
+
+	WriteAPIResponse(w, http.StatusOK, deviceResponses)
 }
 
-func (h *deviceHandler) GetDeviceFunc(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-}
-
-// CreateDeviceFunc creates a new device.
+// CreateDeviceFunc handles the request to create a new device.
 func (h *deviceHandler) CreateDeviceFunc(w http.ResponseWriter, r *http.Request) {
-	// Extract params
-	//id := mux.Vars(r)["id"]
+	var req CreateDeviceRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		WriteErrorResponse(w, http.StatusBadRequest, []string{"invalid request body"})
+		return
+	}
 
-	w.WriteHeader(http.StatusOK)
+	id, err := uuid.Parse(mux.Vars(r)["id"])
+	if err != nil {
+		WriteErrorResponse(w, http.StatusBadRequest, []string{"invalid device ID"})
+		return
+	}
+
+	device, err := h.deviceDAO.CreateDevice(id, req.Label, req.Algorithm)
+	if err != nil {
+		if errors.Is(err, dao.ErrDeviceExists) || errors.Is(err, dao.ErrInvalidAlgorithm) {
+			WriteErrorResponse(w, http.StatusBadRequest, []string{err.Error()})
+		} else {
+			WriteErrorResponse(w, http.StatusInternalServerError, []string{err.Error()})
+		}
+		return
+	}
+
+	deviceResponse := transformToDeviceResponse(*device)
+	WriteAPIResponse(w, http.StatusCreated, deviceResponse)
 }
 
-func (h *deviceHandler) ListSignatureFunc(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
+// GetDeviceFunc handles the request to retrieve a specific device.
+func (h *deviceHandler) GetDeviceFunc(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := uuid.Parse(vars["id"])
+	if err != nil {
+		WriteErrorResponse(w, http.StatusBadRequest, []string{"invalid device ID"})
+		return
+	}
+
+	device, err := h.deviceDAO.GetDevice(id)
+	if err != nil {
+		WriteErrorResponse(w, http.StatusNotFound, []string{err.Error()})
+		return
+	}
+
+	deviceResponse := transformToDeviceResponse(*device)
+	WriteAPIResponse(w, http.StatusOK, deviceResponse)
 }
 
+// Transform domain.SignedTransaction to api.SignedTransactionResponse
+func transformToSignedTransactionResponse(transaction domain.SignedTransaction) SignedTransactionResponse {
+	return SignedTransactionResponse{
+		ID:         transaction.ID,
+		Signature:  transaction.Sign,
+		SignedData: transaction.SignedData(),
+	}
+}
+
+// CreateSignatureFunc handles the request to create a signature for a device.
 func (h *deviceHandler) CreateSignatureFunc(w http.ResponseWriter, r *http.Request) {
+	var req SignTransactionRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		WriteErrorResponse(w, http.StatusBadRequest, []string{"invalid request body"})
+		return
+	}
 
-	w.WriteHeader(http.StatusOK)
+	vars := mux.Vars(r)
+	deviceId, err := uuid.Parse(vars["id"])
+	if err != nil {
+		WriteErrorResponse(w, http.StatusBadRequest, []string{"invalid device ID"})
+		return
+	}
+
+	signed, err := h.deviceDAO.CreateSignedTransaction(deviceId, []byte(req.Data))
+	if err != nil {
+		WriteErrorResponse(w, http.StatusInternalServerError, []string{err.Error()})
+		return
+	}
+
+	signedResponse := transformToSignedTransactionResponse(*signed)
+	WriteAPIResponse(w, http.StatusCreated, signedResponse)
+}
+
+// ListSignatureFunc handles the request to list signatures for a device.
+func (h *deviceHandler) ListSignatureFunc(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	deviceId, err := uuid.Parse(vars["id"])
+	if err != nil {
+		WriteErrorResponse(w, http.StatusBadRequest, []string{"invalid device ID"})
+		return
+	}
+
+	signatures, err := h.deviceDAO.GetSignedTransactions(deviceId)
+	if err != nil {
+		WriteErrorResponse(w, http.StatusInternalServerError, []string{err.Error()})
+		return
+	}
+
+	signaturesResponses := make([]SignedTransactionResponse, 0, len(signatures))
+	for _, signature := range signatures {
+		signaturesResponses = append(signaturesResponses, transformToSignedTransactionResponse(signature))
+	}
+
+	WriteAPIResponse(w, http.StatusOK, signaturesResponses)
 }

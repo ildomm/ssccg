@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/ildomm/ssccg/dao"
 	"net/http"
 	"time"
 )
@@ -18,6 +19,7 @@ const (
 // Server manages HTTP requests and dispatches them to the appropriate services.
 type Server struct {
 	listenAddress     int
+	deviceManager     dao.DeviceDAO
 	readHeaderTimeout time.Duration
 	writeTimeout      time.Duration
 	readTimeout       time.Duration
@@ -59,17 +61,20 @@ func (s *Server) router() *mux.Router {
 
 	r := mux.NewRouter()
 
+	// Interceptors
 	r.Use(NewRecoverMiddleware())
 	r.Use(NewLoggingMiddleware())
 
+	// Dev note: instead of checking for http.MethodGet inside the handler function,
+	// we can just use r.Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/health", s.HealthHandler)
 
-	dh := NewDeviceHandler(nil)
+	dh := NewDeviceHandler(s.deviceManager)
 	r.HandleFunc("/api/v1/devices", dh.ListDeviceFunc).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/devices/{id}", dh.GetDeviceFunc).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/devices/{id}", dh.CreateDeviceFunc).Methods(http.MethodPost)
-	r.HandleFunc("/api/v1/devices/{id}/signatures", dh.ListSignatureFunc).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/devices/{id}", dh.GetDeviceFunc).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/devices/{id}/signatures", dh.CreateSignatureFunc).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/devices/{id}/signatures", dh.ListSignatureFunc).Methods(http.MethodGet)
 
 	return r
 }
@@ -80,6 +85,10 @@ func (s *Server) ListenAddress() int {
 
 func (s *Server) WithListenAddress(listenAddress int) {
 	s.listenAddress = listenAddress
+}
+
+func (s *Server) WithDeviceManager(deviceManager dao.DeviceDAO) {
+	s.deviceManager = deviceManager
 }
 
 func (s *Server) WithReadHeaderTimeout(readHeaderTimeout time.Duration) {

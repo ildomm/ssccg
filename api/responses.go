@@ -62,17 +62,27 @@ type HealthResponse struct {
 	Version string `json:"version"`
 }
 
-// CreateDeviceResponse represents the response for creating a device.
-type CreateDeviceResponse struct {
-	ID            uuid.UUID `db:"id"`
+// DeviceResponse represents the response for a device model.
+type DeviceResponse struct {
+	ID            uuid.UUID `db:"ID"`
 	Label         string    `db:"label"`
 	SignAlgorithm string    `db:"sign_algorithm"`
 	PublicKey     string    `db:"public_key"`
 }
 
-// CreateSignedTransactionResponse represents the response for a signed transaction.
-type CreateSignedTransactionResponse struct {
-	ID         uuid.UUID `json:"id"`
+// CreateDeviceResponse represents the response for creating a device.
+type CreateDeviceResponse struct {
+	DeviceResponse
+}
+
+// SignedTransactionResponse represents the response for a signed transaction.
+type SignedTransactionResponse struct {
+	ID         uuid.UUID `json:"ID"`
 	Signature  string    `json:"signature"`
 	SignedData string    `json:"signed_data"`
+}
+
+// CreateSignedTransactionResponse represents the response for a signed transaction.
+type CreateSignedTransactionResponse struct {
+	SignedTransactionResponse
 }
