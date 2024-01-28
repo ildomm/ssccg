@@ -1,4 +1,4 @@
-package crypto
+package algorithms
 
 import (
 	"crypto/rand"
@@ -42,4 +42,33 @@ func TestRSAMarshaler(t *testing.T) {
 	assert.Equal(t, keyPair.Private.D, decodedKeyPair.Private.D)
 	assert.Equal(t, keyPair.Public.E, decodedKeyPair.Public.E)
 	assert.Equal(t, keyPair.Public.N, decodedKeyPair.Public.N)
+}
+
+// TestRSAKeysBuilder tests the RSAKeysBuilder's GeneratePairs function.
+func TestRSAKeysBuilder(t *testing.T) {
+	generator := RSAKeysBuilder{}
+
+	keyPair, err := generator.Pairs()
+	assert.NoError(t, err, "RSA generator should not produce an error")
+	assert.NotNil(t, keyPair, "RSA key pair should not be nil")
+
+	// Check if the keys are non-nil
+	assert.NotNil(t, keyPair.Private, "RSA private key should not be nil")
+	assert.NotNil(t, keyPair.Public, "RSA public key should not be nil")
+}
+
+func TestRSASignatureGeneration(t *testing.T) {
+	signer := NewRSASigner()
+	generator := NewRSAKeysBuilder()
+	keyPair, err := generator.Pairs()
+	assert.NoError(t, err)
+
+	marshaler := NewRSAMarshaler()
+	_, privateKeyBytes, err := marshaler.Marshal(*keyPair)
+	assert.NoError(t, err)
+
+	dataToBeSigned := []byte("test data")
+	signature, err := signer.Sign(privateKeyBytes, dataToBeSigned)
+	assert.NoError(t, err)
+	assert.NotNil(t, signature)
 }

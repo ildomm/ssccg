@@ -1,4 +1,4 @@
-package crypto
+package algorithms
 
 import (
 	"crypto/ecdsa"
@@ -11,7 +11,7 @@ import (
 
 // TestECCMarshaler tests both Encode and Decode functions of ECCMarshaler.
 func TestECCMarshaler(t *testing.T) {
-	// Generate a key pair for testing
+	// GeneratePairs a key pair for testing
 	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	assert.NoError(t, err)
 
@@ -35,4 +35,33 @@ func TestECCMarshaler(t *testing.T) {
 	assert.Equal(t, keyPair.Private.D, decodedKeyPair.Private.D)
 	assert.Equal(t, keyPair.Public.X, decodedKeyPair.Public.X)
 	assert.Equal(t, keyPair.Public.Y, decodedKeyPair.Public.Y)
+}
+
+// TestECCKeysBuilder tests the ECCKeysBuilder's GeneratePairs function.
+func TestECCKeysBuilder(t *testing.T) {
+	generator := ECCKeysBuilder{}
+
+	keyPair, err := generator.Pairs()
+	assert.NoError(t, err, "ECC generator should not produce an error")
+	assert.NotNil(t, keyPair, "ECC key pair should not be nil")
+
+	// Check if the keys are non-nil
+	assert.NotNil(t, keyPair.Private, "ECC private key should not be nil")
+	assert.NotNil(t, keyPair.Public, "ECC public key should not be nil")
+}
+
+func TestECCSignatureGeneration(t *testing.T) {
+	signer := NewECCSigner()
+	generator := NewECCKeysBuilder()
+	keyPair, err := generator.Pairs()
+	assert.NoError(t, err)
+
+	marshaler := NewECCMarshaler()
+	_, privateKeyBytes, err := marshaler.Marshal(*keyPair)
+	assert.NoError(t, err)
+
+	dataToBeSigned := []byte("test data")
+	signature, err := signer.Sign(privateKeyBytes, dataToBeSigned)
+	assert.NoError(t, err)
+	assert.NotNil(t, signature)
 }

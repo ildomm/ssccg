@@ -14,16 +14,16 @@ var ErrDeviceExists = errors.New("device already exists")
 var ErrInvalidAlgorithm = errors.New("invalid algorithm")
 
 type StandardManager struct {
-	querier       persistence.Querier
-	keysGenerator *crypto.KeysGenerator
-	SignGenerator *crypto.SignGenerator
+	querier     persistence.Querier
+	keysBuilder *crypto.KeysBuilder
+	Signer      *crypto.Signer
 }
 
 func NewDeviceManager(querier persistence.Querier) *StandardManager {
 	dm := StandardManager{
-		querier:       querier,
-		keysGenerator: crypto.NewKeysGenerator(),
-		SignGenerator: crypto.NewSignGenerator(),
+		querier:     querier,
+		keysBuilder: crypto.NewKeysBuilder(),
+		Signer:      crypto.NewSigner(),
 	}
 	return &dm
 }
@@ -46,12 +46,12 @@ func (dm *StandardManager) CreateDevice(ctx context.Context, id uuid.UUID, label
 	}
 
 	// Validate algorithm
-	if !dm.keysGenerator.IsValidAlgorithm(algorithm) {
+	if !dm.keysBuilder.IsValidAlgorithm(algorithm) {
 		return nil, ErrInvalidAlgorithm
 	}
 
-	// Generate key pair
-	privateKey, publicKey, err := dm.keysGenerator.GenerateKeys(algorithm)
+	// GeneratePairs key pair
+	privateKey, publicKey, err := dm.keysBuilder.Build(algorithm)
 	if err != nil {
 		return nil, err
 	}
@@ -127,8 +127,8 @@ func (dm *StandardManager) CreateSignedTransaction(ctx context.Context, deviceId
 		return nil, err
 	}
 
-	// Generate signature
-	signature, err := dm.SignGenerator.Sign(device.SignAlgorithm, []byte(device.PrivateKey), data)
+	// GeneratePairs signature
+	signature, err := dm.Signer.Sign(device.SignAlgorithm, []byte(device.PrivateKey), data)
 	if err != nil {
 		return nil, err
 	}

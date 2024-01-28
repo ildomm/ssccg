@@ -76,8 +76,8 @@ func TestCreateSignedTransaction(t *testing.T) {
 	sm := NewDeviceManager(mockQuerier)
 
 	deviceID := uuid.New()
-	// Generate key pair
-	privateKey, publicKey, err := sm.keysGenerator.GenerateKeys("RSA")
+	// GeneratePairs key pair
+	privateKey, publicKey, err := sm.keysBuilder.Build("RSA")
 	assert.NoError(t, err)
 
 	// Build device
