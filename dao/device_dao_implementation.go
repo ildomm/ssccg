@@ -1,26 +1,27 @@
-package service
+package dao
 
 import (
-	"context"
 	"encoding/base64"
 	"errors"
 	"github.com/google/uuid"
 	"github.com/ildomm/ssccg/crypto"
 	"github.com/ildomm/ssccg/domain"
 	"github.com/ildomm/ssccg/persistence"
+	"sync"
 )
 
 var ErrDeviceExists = errors.New("device already exists")
 var ErrInvalidAlgorithm = errors.New("invalid algorithm")
 
-type StandardManager struct {
+type deviceDao struct {
 	querier     persistence.Querier
 	keysBuilder *crypto.KeysBuilder
 	Signer      *crypto.Signer
+	lock        sync.Mutex
 }
 
-func NewDeviceManager(querier persistence.Querier) *StandardManager {
-	dm := StandardManager{
+func NewDeviceDAO(querier persistence.Querier) *deviceDao {
+	dm := deviceDao{
 		querier:     querier,
 		keysBuilder: crypto.NewKeysBuilder(),
 		Signer:      crypto.NewSigner(),
@@ -31,14 +32,14 @@ func NewDeviceManager(querier persistence.Querier) *StandardManager {
 // CreateDevice creates a new device with a new key pair
 // It does check if the device already exists, return error if it does exist
 // It does check if the algorithm is supported, return error if it does not
-// It does generate a new key pair based on algorithm
+// It does build a new key pair based on algorithm
 // It does start the sign counter at 0
 // It does store the device in the database
 // It returns the newly created device
-func (dm *StandardManager) CreateDevice(ctx context.Context, id uuid.UUID, label, algorithm string) (*domain.Device, error) {
+func (dm *deviceDao) CreateDevice(id uuid.UUID, label, algorithm string) (*domain.Device, error) {
 	// Check if device exists
 	existingDevice, err := dm.querier.GetDevice(id)
-	if err != nil {
+	if err != nil && !errors.Is(err, persistence.ErrDeviceNotFound) {
 		return nil, err
 	}
 	if existingDevice != nil {
@@ -50,7 +51,7 @@ func (dm *StandardManager) CreateDevice(ctx context.Context, id uuid.UUID, label
 		return nil, ErrInvalidAlgorithm
 	}
 
-	// GeneratePairs key pair
+	// Builds key pair
 	privateKey, publicKey, err := dm.keysBuilder.Build(algorithm)
 	if err != nil {
 		return nil, err
@@ -76,19 +77,19 @@ func (dm *StandardManager) CreateDevice(ctx context.Context, id uuid.UUID, label
 }
 
 // GetDevices returns all devices from the database
-func (dm *StandardManager) GetDevices(ctx context.Context) ([]domain.Device, error) {
+func (dm *deviceDao) GetDevices() ([]domain.Device, error) {
 	return dm.querier.GetDevices()
 }
 
 // GetDevice returns a device from the database
-func (dm *StandardManager) GetDevice(ctx context.Context, id uuid.UUID) (*domain.Device, error) {
+func (dm *deviceDao) GetDevice(id uuid.UUID) (*domain.Device, error) {
 	return dm.querier.GetDevice(id)
 }
 
 // previousDeviceSignature returns the previous device signature
 // It does return the device id if no previous signature exists
 // It does return the previous signature if it exists
-func (dm *StandardManager) previousDeviceSignature(deviceId uuid.UUID, signCounter int) (string, error) {
+func (dm *deviceDao) previousDeviceSignature(deviceId uuid.UUID, signCounter int) (string, error) {
 
 	previousSignedTransaction, err := dm.querier.GetSignedTransaction(deviceId, signCounter)
 	if err != nil {
@@ -110,7 +111,12 @@ func (dm *StandardManager) previousDeviceSignature(deviceId uuid.UUID, signCount
 // It does persist the device sign counter with the transaction
 // It does store the signed transaction in the database
 // It returns the newly created signed transaction
-func (dm *StandardManager) CreateSignedTransaction(ctx context.Context, deviceId uuid.UUID, data []byte) (*domain.SignedTransaction, error) {
+func (dm *deviceDao) CreateSignedTransaction(deviceId uuid.UUID, data []byte) (*domain.SignedTransaction, error) {
+
+	// Lock to prevent concurrent access
+	// Doing so, we prevent the sign counter to be incremented twice wrongly
+	dm.lock.Lock()
+	defer dm.lock.Unlock()
 
 	// Check if device exists
 	device, err := dm.querier.GetDevice(deviceId)
@@ -127,30 +133,37 @@ func (dm *StandardManager) CreateSignedTransaction(ctx context.Context, deviceId
 		return nil, err
 	}
 
-	// GeneratePairs signature
-	signature, err := dm.Signer.Sign(device.SignAlgorithm, []byte(device.PrivateKey), data)
-	if err != nil {
-		return nil, err
-	}
-
-	// Increment sign counter
-	device.SignCounter++
-	err = dm.querier.UpdateDevice(*device)
-	if err != nil {
-		return nil, err
-	}
-
 	// Build signed transaction
 	transaction := domain.SignedTransaction{
 		ID:                 uuid.New(),
 		DeviceID:           deviceId,
 		RawData:            data,
-		Sign:               base64.StdEncoding.EncodeToString(signature),
-		SignCounter:        device.SignCounter,
+		SignCounter:        device.SignCounter + 1,
 		PreviousDeviceSign: previousSignature,
 	}
 
+	// Sign data
+	signature, err := dm.Signer.Sign(device.SignAlgorithm,
+		[]byte(device.PrivateKey),
+		[]byte(transaction.SignedData()))
+	if err != nil {
+		return nil, err
+	}
+	transaction.Sign = base64.StdEncoding.EncodeToString(signature)
+
+	// Store signed transaction in database
 	_, err = dm.querier.SaveSignedTransaction(transaction)
+	if err != nil {
+		return nil, err
+	}
+
+	// Increment sign counter
+	// This is done after the transaction is stored in the database
+	// to prevent the sign counter to be incremented wrongly
+	// Fail safe measure
+	// When using a real database, this should be done in a transaction
+	device.SignCounter++
+	err = dm.querier.UpdateDevice(*device)
 	if err != nil {
 		return nil, err
 	}
@@ -159,6 +172,6 @@ func (dm *StandardManager) CreateSignedTransaction(ctx context.Context, deviceId
 }
 
 // GetSignedTransactions returns all signed transactions from the database
-func (dm *StandardManager) GetSignedTransactions(ctx context.Context, deviceId uuid.UUID) ([]domain.SignedTransaction, error) {
+func (dm *deviceDao) GetSignedTransactions(deviceId uuid.UUID) ([]domain.SignedTransaction, error) {
 	return dm.querier.GetSignedTransactions(deviceId)
 }

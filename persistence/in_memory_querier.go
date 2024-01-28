@@ -83,7 +83,6 @@ func (q *InMemoryQuerier) SaveSignedTransaction(transaction domain.SignedTransac
 		return uuid.Nil, ErrDeviceNotFound
 	}
 
-	transaction.ID = uuid.New() // GeneratePairs a new UUID for the transaction
 	q.signedTransacts[transaction.DeviceID] = append(q.signedTransacts[transaction.DeviceID], transaction)
 	return transaction.ID, nil
 }

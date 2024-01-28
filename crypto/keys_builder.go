@@ -9,8 +9,7 @@ func NewKeysBuilder() *KeysBuilder {
 
 // IsValidAlgorithm checks if a specific algorithm is registered.
 func (kg *KeysBuilder) IsValidAlgorithm(algorithm string) bool {
-	_, exists := algorithmKeyBuildersRegistry[algorithm]
-	return exists
+	return IsAlgorithmRegistered(algorithm)
 }
 
 // Build builds a new key pair using a specific algorithm.

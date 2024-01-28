@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.1.0
+
+- API Handlers implementation
+  - Device handler methods implementations
+
 ## v0.0.10
 
 - Document API as a Swagger spec file using OpenAPI 3.0.0

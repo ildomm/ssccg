@@ -9,8 +9,7 @@ func NewSigner() *Signer {
 
 // IsValidAlgorithm checks if a specific algorithm is registered.
 func (sg *Signer) IsValidAlgorithm(algorithm string) bool {
-	_, exists := algorithmSignersRegistry[algorithm]
-	return exists
+	return IsAlgorithmRegistered(algorithm)
 }
 
 // Sign signs a message using a specific algorithm.

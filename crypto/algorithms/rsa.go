@@ -55,14 +55,14 @@ func (m *RSAMarshaler) Unmarshal(privateKeyBytes []byte) (*RSAKeyPair, error) {
 	}, nil
 }
 
-// RSAKeysBuilder generates a RSA key pair.
+// RSAKeysBuilder builds an RSA key pair.
 type RSAKeysBuilder struct{}
 
 func NewRSAKeysBuilder() RSAKeysBuilder {
 	return RSAKeysBuilder{}
 }
 
-// Pairs generates a new RSAKeyPair.
+// Pairs builds a new RSAKeyPair.
 func (g RSAKeysBuilder) Pairs() (*RSAKeyPair, error) {
 	// Security has been ignored for the sake of simplicity.
 	key, err := rsa.GenerateKey(rand.Reader, 512)
@@ -76,7 +76,7 @@ func (g RSAKeysBuilder) Pairs() (*RSAKeyPair, error) {
 	}, nil
 }
 
-// Keys generates a new RSAKeyPair and returns the public and private key as a byte slice.
+// Keys builds a new RSAKeyPair and returns the public and private key as a byte slice.
 func (g RSAKeysBuilder) Keys() ([]byte, []byte, error) {
 	keypair, err := g.Pairs()
 	if err != nil {

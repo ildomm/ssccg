@@ -63,14 +63,14 @@ func (m ECCMarshaler) Unmarshal(privateKeyBytes []byte) (*ECCKeyPair, error) {
 	}, nil
 }
 
-// ECCKeysBuilder generates an ECC key pair.
+// ECCKeysBuilder builds an ECC key pair.
 type ECCKeysBuilder struct{}
 
 func NewECCKeysBuilder() ECCKeysBuilder {
 	return ECCKeysBuilder{}
 }
 
-// Pairs generates a new ECCKeyPair.
+// Pairs builds a new ECCKeyPair.
 func (g ECCKeysBuilder) Pairs() (*ECCKeyPair, error) {
 	// Security has been ignored for the sake of simplicity.
 	key, err := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
@@ -84,7 +84,7 @@ func (g ECCKeysBuilder) Pairs() (*ECCKeyPair, error) {
 	}, nil
 }
 
-// Keys generates a new ECCKeyPair and returns the public and private keys as byte slices.
+// Keys builds a new ECCKeyPair and returns the public and private keys as byte slices.
 func (g ECCKeysBuilder) Keys() ([]byte, []byte, error) {
 	keypair, err := g.Pairs()
 	if err != nil {
