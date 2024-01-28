@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"github.com/google/uuid"
 	"net/http"
 )
 
@@ -53,4 +54,25 @@ func WriteAPIResponse(w http.ResponseWriter, code int, data interface{}) {
 	}
 
 	w.Write(bytes) //nolint:all
+}
+
+// HealthResponse represents the response for the health check.
+type HealthResponse struct {
+	Status  string `json:"status"`
+	Version string `json:"version"`
+}
+
+// CreateDeviceResponse represents the response for creating a device.
+type CreateDeviceResponse struct {
+	ID            uuid.UUID `db:"id"`
+	Label         string    `db:"label"`
+	SignAlgorithm string    `db:"sign_algorithm"`
+	PublicKey     string    `db:"public_key"`
+}
+
+// CreateSignedTransactionResponse represents the response for a signed transaction.
+type CreateSignedTransactionResponse struct {
+	ID         uuid.UUID `json:"id"`
+	Signature  string    `json:"signature"`
+	SignedData string    `json:"signed_data"`
 }

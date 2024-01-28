@@ -62,12 +62,12 @@ func (s *Server) router() *mux.Router {
 	r.Use(NewRecoverMiddleware())
 	r.Use(NewLoggingMiddleware())
 
-	r.HandleFunc("/api/v0/health", s.HealthHandler)
+	r.HandleFunc("/api/v1/health", s.HealthHandler)
 
 	dh := NewDeviceHandler(nil)
 	r.HandleFunc("/api/v1/devices", dh.ListDeviceFunc).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/devices/{id}", dh.GetDeviceFunc).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/devices/{id}", dh.CreateDeviceFunc).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/devices/{id}", dh.CreateDeviceFunc).Methods(http.MethodPost)
 	r.HandleFunc("/api/v1/devices/{id}/signatures", dh.ListSignatureFunc).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/devices/{id}/signatures", dh.CreateSignatureFunc).Methods(http.MethodPost)
 

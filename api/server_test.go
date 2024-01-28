@@ -48,7 +48,7 @@ func TestServerRun(t *testing.T) {
 
 	// Send a request to the server
 	time.Sleep(1 * time.Second)                                  // Wait a moment for the server to start
-	resp, err := http.Get("http://localhost:8080/api/v0/health") // Assuming a health check endpoint exists
+	resp, err := http.Get("http://localhost:8080/api/v1/health") // Assuming a health check endpoint exists
 
 	assert.NoError(t, err, "request to server failed")
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status code from health check")

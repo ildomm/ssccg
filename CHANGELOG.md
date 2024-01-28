@@ -1,5 +1,9 @@
 # Change Log
 
+## v0.0.10
+
+- Document API as a Swagger spec file using OpenAPI 3.0.0
+
 ## v0.0.9
 
 - Implement devices manager

@@ -5,11 +5,6 @@ import (
 	"net/http"
 )
 
-type HealthResponse struct {
-	Status  string `json:"status"`
-	Version string `json:"version"`
-}
-
 // HealthHandler evaluates the health of the service and writes a standardized response.
 func (s *Server) HealthHandler(response http.ResponseWriter, request *http.Request) {
 	if request.Method != http.MethodGet {
@@ -21,7 +16,7 @@ func (s *Server) HealthHandler(response http.ResponseWriter, request *http.Reque
 
 	health := HealthResponse{
 		Status:  "pass",
-		Version: "v0",
+		Version: "v1",
 	}
 
 	WriteAPIResponse(response, http.StatusOK, health)
@@ -58,9 +53,6 @@ func (h *deviceHandler) ListSignatureFunc(w http.ResponseWriter, r *http.Request
 }
 
 func (h *deviceHandler) CreateSignatureFunc(w http.ResponseWriter, r *http.Request) {
-
-	//Sign:     string(signature), // TODO: <signature_base64_encoded>
-	//SignData:    string(PreviousDeviceSign), // TODO: <signature_counter>_<data_to_be_signed>_<last_signature_base64_encoded>
 
 	w.WriteHeader(http.StatusOK)
 }
