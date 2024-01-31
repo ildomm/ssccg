@@ -1,0 +1,202 @@
+openapi: 3.0.0
+info:
+  title: Devices API
+  version: 0.1.0
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+paths:
+  /api/v1/health:
+    get:
+      summary: Evaluate the health of the service
+      responses:
+        '200':
+          description: Health status of the service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/v1/devices:
+    get:
+      summary: Retrieve all registered devices
+      responses:
+        '200':
+          description: A list of devices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Device'
+
+  /api/v1/devices/{id}:
+    get:
+      summary: Retrieve a specific registered device
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: A single device
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+
+    post:
+      summary: Create a device
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDeviceRequest'
+      responses:
+        '201':
+          description: Device created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateDeviceResponse'
+
+  /api/v1/devices/{id}/signatures:
+    get:
+      summary: Retrieve signatures related to a device
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: A list of signatures
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SignedTransaction'
+
+    post:
+      summary: Create a signature for a registered device
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignTransactionRequest'
+      responses:
+        '201':
+          description: Signature created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateSignedTransactionResponse'
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        Status:
+          type: string
+        Version:
+          type: string
+
+    Device:
+      type: object
+      properties:
+        ID:
+          type: string
+          format: uuid
+        Label:
+          type: string
+        SignCounter:
+          type: integer
+        SignAlgorithm:
+          type: string
+        PublicKey:
+          type: string
+        PrivateKey:
+          type: string
+
+    SignedTransaction:
+      type: object
+      properties:
+        ID:
+          type: string
+          format: uuid
+        DeviceID:
+          type: string
+          format: uuid
+        RawData:
+          type: string
+          format: byte
+        Sign:
+          type: string
+        PreviousDeviceSign:
+          type: string
+        SignCounter:
+          type: integer
+
+    CreateDeviceRequest:
+      type: object
+      properties:
+        algorithm:
+          type: string
+          enum: [ECDSA, RSA]
+        label:
+          type: string
+
+    CreateDeviceResponse:
+      type: object
+      properties:
+        ID:
+          type: string
+          format: uuid
+        Label:
+          type: string
+        SignAlgorithm:
+          type: string
+        PublicKey:
+          type: string
+
+    SignTransactionRequest:
+      type: object
+      properties:
+        data:
+          type: string
+
+    CreateSignedTransactionResponse:
+      type: object
+      properties:
+        ID:
+          type: string
+          format: uuid
+        Signature:
+          type: string
+        SignedData:
+          type: string
