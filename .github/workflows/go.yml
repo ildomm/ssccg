@@ -1,7 +1,7 @@
 # This workflow will build a golang project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
 
-name: Go
+name: Test
 
 on:
   push:
@@ -32,3 +32,14 @@ jobs:
 
     - name: Test using Github
       run: go test -v ./...
+
+    - name: Generate test coverage report
+      run: go test ./... -coverprofile=./cover.out -covermode=atomic -coverpkg=./...
+    - name: Generate test coverage badge
+      uses: vladopajic/go-test-coverage@v2
+      with:
+        profile: cover.out
+        local-prefix: github.com/ildomm/ssccg
+        threshold-total: 80
+        git-branch: badges
+        git-token: ${{ github.ref_name == 'main' && secrets.GITHUB_TOKEN || '' }}
