@@ -1,3 +1,6 @@
+[![Go Report Card](https://goreportcard.com/badge/github.com/ildomm/ssccg?cache=v1)](https://goreportcard.com/report/github.com/ildomm/ssccg)
+![coverage](https://raw.githubusercontent.com/ildomm/ssccg/badges/.badges/main/coverage.svg)
+
 # SSCCG Backend Challenge
 REST API service that allows customers to create `signature devices` with which they can sign arbitrary transaction data.
 
