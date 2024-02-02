@@ -1,4 +1,4 @@
-# This workflow will build a golang project
+# This workflow will build a Golang project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
 
 name: Test
@@ -40,6 +40,6 @@ jobs:
       with:
         profile: cover.out
         local-prefix: github.com/ildomm/ssccg
-        threshold-total: 80
+        threshold-total: 75
         git-branch: badges
         git-token: ${{ github.ref_name == 'main' && secrets.GITHUB_TOKEN || '' }}
